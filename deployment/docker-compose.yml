@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  salla-mcp:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile
+    container_name: salla-mcp-server
+    ports:
+      - "8000:8000"
+    environment:
+      - SALLA_API_TOKEN=${SALLA_API_TOKEN}
+      - SALLA_BASE_URL=${SALLA_BASE_URL:-https://api.salla.dev/v2}
+      - OPENAPI_SPEC_PATH=/app/openapi.json
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+    volumes:
+      - ./openapi.json:/app/openapi.json:ro
+      - ./config/.env:/app/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  default:
+    name: salla-mcp-network

@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: salla-mcp-server
+  namespace: default
+  labels:
+    app: salla-mcp
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: salla-mcp
+  template:
+    metadata:
+      labels:
+        app: salla-mcp
+    spec:
+      containers:
+      - name: salla-mcp
+        image: salla-mcp:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: mcp-port
+          protocol: TCP
+        env:
+        - name: SALLA_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: salla-mcp-secrets
+              key: api-token
+        - name: SALLA_BASE_URL
+          value: "https://api.salla.dev/v2"
+        - name: OPENAPI_SPEC_PATH
+          value: "/app/openapi.json"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: LOG_FORMAT
+          value: "json"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        volumeMounts:
+        - name: spec-volume
+          mountPath: /app/openapi.json
+          subPath: openapi.json
+      volumes:
+      - name: spec-volume
+        configMap:
+          name: salla-mcp-spec
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: salla-mcp-service
+  namespace: default
+  labels:
+    app: salla-mcp
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: mcp-port
+    protocol: TCP
+    name: mcp
+  selector:
+    app: salla-mcp
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: salla-mcp-secrets
+  namespace: default
+type: Opaque
+stringData:
+  api-token: "your-api-token-here"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: salla-mcp-spec
+  namespace: default
+data:
+  openapi.json: |
+    # Content of openapi.json goes here
