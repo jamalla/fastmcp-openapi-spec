@@ -1,38 +1,32 @@
-#!/usr/bin/env python
 """
-Entry point for Salla MCP Server.
-This script initializes and runs the server using stdio transport.
+Salla API MCP Server
+
+Converts an OpenAPI specification into an MCP server with two tools:
+  - search: discover API endpoints by keyword
+  - execute: call any discovered endpoint with authentication
+
+Usage:
+  python server.py                    # stdio (default)
+  python server.py streamable-http    # HTTP server
+  python server.py sse                # Server-Sent Events
 """
 
-import asyncio
 import sys
-from pathlib import Path
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+from mcp.server.fastmcp import FastMCP
 
-from salla_mcp import create_server
+from src.config import HOST, PORT
+from src.tools import execute, search
 
+mcp = FastMCP("salla-api", host=HOST, port=PORT)
 
-async def main():
-    """Main entry point."""
-    try:
-        # Create server with environment configuration
-        server = create_server()
-
-        # Initialize
-        await server.initialize()
-
-        # Run
-        await server.run()
-
-    except KeyboardInterrupt:
-        print("\nShutdown requested by user")
-        sys.exit(0)
-    except Exception as e:
-        print(f"Fatal error: {e}", file=sys.stderr)
-        sys.exit(1)
-
+mcp.tool()(search)
+mcp.tool()(execute)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
+    if transport not in ("stdio", "sse", "streamable-http"):
+        print("Usage: python server.py [stdio|sse|streamable-http]")
+        sys.exit(1)
+    print(f"Starting MCP server ({transport}) ...")
+    mcp.run(transport=transport)
