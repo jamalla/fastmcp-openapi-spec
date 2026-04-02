@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Salla API Agent",
-  description: "AI agent for the Salla e-commerce API",
+  title: "وكيل سلة الذكي",
+  description: "وكيل ذكي لواجهة برمجة تطبيقات سلة",
 };
 
 export default function RootLayout({
@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="ar" dir="rtl">
       <body>{children}</body>
     </html>
   );

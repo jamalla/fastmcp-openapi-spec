@@ -16,12 +16,15 @@ import sys
 from mcp.server.fastmcp import FastMCP
 
 from src.config import HOST, PORT
-from src.tools import execute, search
+from src.tools import execute, list_orders, sales_report, search, store_dashboard
 
 mcp = FastMCP("salla-api", host=HOST, port=PORT)
 
 mcp.tool()(search)
 mcp.tool()(execute)
+mcp.tool()(list_orders)
+mcp.tool()(store_dashboard)
+mcp.tool()(sales_report)
 
 if __name__ == "__main__":
     transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
